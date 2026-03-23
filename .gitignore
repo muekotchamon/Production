@@ -5,6 +5,8 @@
 dashboard/node_modules/
 dashboard/.next/
 dashboard/out/
+# Static export output (copied to /docs for GitHub Pages)
+# docs/ is committed on purpose
 dashboard/build/
 dashboard/.vercel/
 dashboard/.env*
