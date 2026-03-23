@@ -10,11 +10,18 @@ The Next.js app lives in **`dashboard/`** (lowercase package name required by np
 
 ### วิธีที่แนะนำ: GitHub Actions (อัตโนมัติ)
 
+**สำคัญ:** ต้องทำข้อ 2–3 **ก่อนหรือทันทีหลัง push ครั้งแรก** — ถ้ายังไม่เปิด Pages / ยังไม่เลือก GitHub Actions เป็นแหล่ง build ขั้น **Configure Pages** ใน Actions จะ error `Not Found`
+
 1. Push โค้ดนี้ขึ้น `main` (มีไฟล์ `.github/workflows/deploy-github-pages.yml` แล้ว)
 2. บน GitHub ไปที่ **Settings → Pages**
-3. ที่ **Build and deployment → Source** เลือก **GitHub Actions** (ไม่ใช่ “Deploy from a branch”)
-4. เปิดแท็บ **Actions** รอ workflow **Deploy GitHub Pages** รันจบ (เขียว)
-5. รีเฟรช `https://muekotchamon.github.io/Production/` (อาจรอ 1–2 นาที)
+3. ที่ **Build and deployment → Source** เลือก **GitHub Actions** (ไม่ใช่ “Deploy from a branch” และไม่ใช่ `/ (root)`)
+4. กลับไปที่แท็บ **Actions** → เปิด run ที่ล้ม → **Re-run all jobs** (หรือ push commit ใหม่)
+5. รอ workflow **Deploy GitHub Pages** รันจบ (เขียว)
+6. รีเฟรช `https://muekotchamon.github.io/Production/` (อาจรอ 1–2 นาที)
+
+#### ถ้าเห็น error: “Get Pages site failed” / `HttpError: Not Found`
+
+แปลว่ายังไม่ได้ทำข้อ 3 — ไป **Settings → Pages** แล้วตั้ง **Source = GitHub Actions** จากนั้น **Re-run** workflow
 
 ### วิธีสำรอง: โฟลเดอร์ `/docs`
 

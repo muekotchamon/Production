@@ -1,5 +1,6 @@
 # Build Next.js static export and deploy to GitHub Pages.
-# After first push: Repo → Settings → Pages → Build: "GitHub Actions"
+# REQUIRED once per repo: Settings → Pages → Build and deployment → Source: "GitHub Actions"
+# (Otherwise "Configure Pages" fails with HttpError: Not Found — no Pages site exists yet.)
 
 name: Deploy GitHub Pages
 
