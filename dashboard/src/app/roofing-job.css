@@ -914,6 +914,53 @@
   gap: 0.65rem;
 }
 
+.rj-d5-production-detail {
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.55rem 0.55rem 0.5rem 0.45rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--rj-d5-gray-border);
+}
+
+.rj-d5-production-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.rj-d5-production-detail-icon {
+  font-size: 1.05rem;
+  color: var(--rj-d5-text-muted);
+  flex-shrink: 0;
+}
+
+.rj-d5-production-detail-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.rj-d5-production-detail-body {
+  width: 100%;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--rj-d5-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  min-height: 1.35rem;
+}
+
+.rj-d5-production-detail-empty {
+  color: var(--rj-d5-text-muted);
+  font-style: normal;
+  user-select: none;
+}
+
 .rj-d5-header {
   background: #fff;
   border-radius: 12px;
@@ -1540,7 +1587,7 @@
 .rj-d5-details {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.8rem;
 }
 
 .rj-d5-details-row {
@@ -1556,6 +1603,62 @@
 .rj-d5-details-col-half {
   flex: 1;
   min-width: 0;
+}
+
+/* Paired top row: equal-height cards, notes ↔ material ordering */
+.rj-d5-details-row--balanced {
+  align-items: stretch;
+}
+
+.rj-d5-details-row--balanced > .rj-d5-details-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rj-d5-detail-card--stretch {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 15.5rem;
+}
+
+.rj-d5-detail-textarea--fill {
+  flex: 1 1 auto;
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.rj-d5-detail-card--material {
+  min-height: 0;
+}
+
+.rj-d5-material-card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rj-d5-note-line--material-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 575.98px) {
+  .rj-d5-details-row--balanced {
+    flex-direction: column;
+  }
+
+  .rj-d5-detail-card--stretch {
+    min-height: 0;
+  }
+}
+
+.rj-d5-detail-card--permit {
+  padding-bottom: 0.85rem;
 }
 
 .rj-d5-detail-card {
@@ -1702,6 +1805,247 @@
   font-size: 0.875rem;
   color: var(--rj-d5-text-muted);
   pointer-events: none;
+}
+
+.rj-d5-detail-header--spread {
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.rj-d5-detail-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.rj-d5-inline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.rj-d5-inline-toggle-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--rj-d5-text-muted);
+}
+
+.rj-d5-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rj-d5-toggle-row-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rj-d5-text-muted);
+}
+
+.rj-d5-switch .form-check-input {
+  width: 2.25rem;
+  height: 1.15rem;
+  cursor: pointer;
+}
+
+.rj-d5-switch--green .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+}
+
+.rj-d5-switch--green .form-check-input:checked {
+  background-color: var(--rj-d5-green);
+  border-color: var(--rj-d5-green);
+}
+
+.rj-d5-switch--slate .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(51, 65, 85, 0.2);
+}
+
+.rj-d5-switch--slate .form-check-input:checked {
+  background-color: #334155;
+  border-color: #334155;
+}
+
+/* Permit stages: square checkbox (not switch) */
+.rj-d5-permit-checkbox {
+  min-height: 0;
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rj-d5-permit-checkbox .form-check-input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  float: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.rj-d5-permit-checkbox .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(51, 65, 85, 0.2);
+}
+
+.rj-d5-permit-checkbox .form-check-input:checked {
+  background-color: #334155;
+  border-color: #334155;
+}
+
+.rj-d5-line-field {
+  width: 100%;
+  border: 1px solid var(--rj-d5-gray-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8125rem;
+  color: var(--rj-d5-text);
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rj-d5-line-field:focus {
+  outline: none;
+  border-color: var(--rj-d5-text-muted);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+
+.rj-d5-line-field::placeholder {
+  color: var(--rj-d5-text-muted);
+}
+
+.rj-d5-permit-subtitle {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rj-d5-text-muted);
+  margin-top: 0.2rem;
+  line-height: 1.25;
+}
+
+.rj-d5-detail-card--permit .rj-d5-detail-header-title {
+  align-items: flex-start;
+}
+
+.rj-d5-permit-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem 1.25rem;
+  align-items: end;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--rj-d5-gray-border);
+}
+
+.rj-d5-permit-meta-cost .rj-d5-detail-label {
+  margin-bottom: 0.35rem;
+}
+
+.rj-d5-permit-meta-cost .rj-d5-currency-input {
+  max-width: 11rem;
+}
+
+.rj-d5-permit-meta-ipi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  padding-bottom: 0.15rem;
+}
+
+.rj-d5-permit-meta-ipi-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rj-d5-text-muted);
+  white-space: nowrap;
+}
+
+.rj-d5-permit-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rj-d5-text-muted);
+  margin: 0 0 0.45rem;
+}
+
+.rj-d5-permit-stages-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.rj-d5-permit-cell {
+  padding: 0.15rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.rj-d5-permit-cell-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rj-d5-text-muted);
+}
+
+.rj-d5-permit-cell-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.rj-d5-permit-cell-date {
+  flex: 1;
+  min-width: 0;
+}
+
+.rj-d5-permit-comment {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--rj-d5-gray-border);
+}
+
+.rj-d5-permit-comment .rj-d5-detail-label {
+  margin-bottom: 0.4rem;
+}
+
+.rj-d5-permit-comment-textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+@media (max-width: 520px) {
+  .rj-d5-permit-stages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rj-d5-permit-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .rj-d5-permit-meta-ipi {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-bottom: 0;
+  }
+
+  .rj-d5-permit-meta-cost .rj-d5-currency-input {
+    max-width: none;
+  }
 }
 
 /* —— Project Details Design Variants —— */

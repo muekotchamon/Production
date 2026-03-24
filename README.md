@@ -41,4 +41,4 @@ npm run dev
 
 เปิด **[http://localhost:3000/Production](http://localhost:3000/Production)** (มี base path `/Production` ให้ตรงกับ GitHub Pages)
 
-แท็บ: **Step bar**, **Timeline**, **Card grid**, **Premium**, **Project**.
+หน้า CRM แสดงมุมมอง **Project** เท่านั้น

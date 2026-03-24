@@ -16,6 +16,7 @@ type Props = Pick<
 > & {
   noteOpenForId: string | null;
   setNoteOpenForId: (id: string | null) => void;
+  productionDetail: string;
 };
 
 export default function WorkflowProjectDashboard({
@@ -27,6 +28,7 @@ export default function WorkflowProjectDashboard({
   firstIncompleteIndex,
   noteOpenForId,
   setNoteOpenForId,
+  productionDetail,
 }: Props) {
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
   const progressPercent = Math.round((completedCount / totalSteps) * 100);
@@ -43,6 +45,35 @@ export default function WorkflowProjectDashboard({
 
   return (
     <div className="rj-d5">
+      <section
+        className="rj-d5-production-detail"
+        aria-labelledby="rj-production-detail-heading"
+      >
+        <div className="rj-d5-production-detail-head">
+          <i
+            className="bi bi-hammer rj-d5-production-detail-icon"
+            aria-hidden
+          />
+          <h3
+            id="rj-production-detail-heading"
+            className="rj-d5-production-detail-title"
+          >
+            Production detail
+          </h3>
+        </div>
+        <div
+          className="rj-d5-production-detail-body"
+          role="region"
+          aria-label="Production detail"
+        >
+          {productionDetail.trim() ? (
+            productionDetail
+          ) : (
+            <span className="rj-d5-production-detail-empty">—</span>
+          )}
+        </div>
+      </section>
+
       <div className="rj-d5-header">
         <p className="rj-d5-label">CURRENT PRODUCTION</p>
         <h2 className="rj-d5-title">Project Alpha: Luxury Residential</h2>
