@@ -157,6 +157,40 @@ export default function ProjectDetailsSection({
               <label
                 className={`rj-details-label rj-details-label--${designVariant}`}
               >
+                Customer name
+              </label>
+              <input
+                type="text"
+                className={`rj-details-input rj-details-input--${designVariant}`}
+                value={details.customerName}
+                onChange={(e) =>
+                  updateDetail("customerName", e.target.value)
+                }
+                placeholder="Name"
+              />
+            </div>
+            <div className={`rj-details-field rj-details-field--${designVariant}`}>
+              <label
+                className={`rj-details-label rj-details-label--${designVariant}`}
+              >
+                Customer address
+              </label>
+              <input
+                type="text"
+                className={`rj-details-input rj-details-input--${designVariant}`}
+                value={details.customerAddress}
+                onChange={(e) =>
+                  updateDetail("customerAddress", e.target.value)
+                }
+                placeholder="Street, city, state…"
+              />
+            </div>
+          </div>
+          <div className={`rj-details-row rj-details-row--${designVariant}`}>
+            <div className={`rj-details-field rj-details-field--${designVariant}`}>
+              <label
+                className={`rj-details-label rj-details-label--${designVariant}`}
+              >
                 Internal Notes
               </label>
               <textarea
@@ -257,6 +291,44 @@ export default function ProjectDetailsSection({
 
   return (
     <div className="rj-d5-details mt-3">
+      <div className="rj-d5-detail-card mb-3">
+        <div className="rj-d5-detail-header">
+          <i className="bi bi-person-vcard rj-d5-detail-icon rj-d5-detail-icon--blue" />
+          <h3 className="rj-d5-detail-title">CUSTOMER</h3>
+        </div>
+        <div className="rj-d5-details-row">
+          <div className="rj-d5-details-col-half">
+            <label className="rj-d5-detail-label" htmlFor="rj-customer-name">
+              Name
+            </label>
+            <input
+              id="rj-customer-name"
+              type="text"
+              className="rj-d5-line-field"
+              value={details.customerName}
+              onChange={(e) =>
+                updateDetail("customerName", e.target.value)
+              }
+              placeholder="Customer name"
+            />
+          </div>
+          <div className="rj-d5-details-col-half">
+            <label className="rj-d5-detail-label" htmlFor="rj-customer-addr">
+              Address
+            </label>
+            <input
+              id="rj-customer-addr"
+              type="text"
+              className="rj-d5-line-field"
+              value={details.customerAddress}
+              onChange={(e) =>
+                updateDetail("customerAddress", e.target.value)
+              }
+              placeholder="Street, city, state…"
+            />
+          </div>
+        </div>
+      </div>
       <div className="rj-d5-details-row rj-d5-details-row--balanced">
         <div className="rj-d5-details-col">
           <div className="rj-d5-detail-card rj-d5-detail-card--stretch">
@@ -371,6 +443,26 @@ export default function ProjectDetailsSection({
                 }
               />
             </div>
+          </div>
+
+          <div className="rj-d5-detail-card rj-d5-detail-card--stretch mt-3">
+            <div className="rj-d5-detail-header">
+              <i className="bi bi-box-seam rj-d5-detail-icon rj-d5-detail-icon--green" />
+              <h3 className="rj-d5-detail-title">MATERIAL</h3>
+            </div>
+            <label className="rj-d5-detail-label" htmlFor="rj-material-logistics-full">
+              Material &amp; logistics
+            </label>
+            <textarea
+              id="rj-material-logistics-full"
+              className="rj-d5-detail-textarea rj-d5-detail-textarea--fill"
+              rows={4}
+              placeholder="Specs, colors, delivery access, supplier notes…"
+              value={details.materialLogistics}
+              onChange={(e) =>
+                updateDetail("materialLogistics", e.target.value)
+              }
+            />
           </div>
         </div>
       </div>

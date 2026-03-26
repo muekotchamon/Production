@@ -1,0 +1,11 @@
+{
+  "name": "production",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix dashboard",
+    "build": "npm run build --prefix dashboard",
+    "build:pages": "npm run build:pages --prefix dashboard",
+    "start": "npm run start --prefix dashboard",
+    "lint": "npm run lint --prefix dashboard"
+  }
+}

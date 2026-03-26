@@ -2,7 +2,19 @@
 
 import { useState, useCallback } from "react";
 
+/** Multi-day work blocks on the Design 2 production calendar. */
+export type ScheduleCalendarEntry = {
+  id: string;
+  title: string;
+  assigneeId: string;
+  startDate: string;
+  endDate: string;
+};
+
 export type ProjectDetails = {
+  customerName: string;
+  customerAddress: string;
+  soldDate: string;
   productionDetail: string;
   internalNotes: string;
   materialLogistics: string;
@@ -27,9 +39,16 @@ export type ProjectDetails = {
   dumpsterEnabled: boolean;
   dumpsterOrdered: string;
   dumpsterCost: string;
+  /** Shared by Schedule step, Assign (optional dates), production dates, and calendar. */
+  scheduleStart: string;
+  scheduleEnd: string;
+  scheduleCalendarEntries: ScheduleCalendarEntry[];
 };
 
 const initialDetails: ProjectDetails = {
+  customerName: "Valerie Chen",
+  customerAddress: "4521 Maple Ave, Chicago, IL 60640",
+  soldDate: "Feb 10, 2025",
   productionDetail:
     "3/13- 1st Call: LVM letting Valerie know we will call when temp gets warmer",
   internalNotes: "",
@@ -55,6 +74,9 @@ const initialDetails: ProjectDetails = {
   dumpsterEnabled: false,
   dumpsterOrdered: "",
   dumpsterCost: "",
+  scheduleStart: "",
+  scheduleEnd: "",
+  scheduleCalendarEntries: [],
 };
 
 export function useProjectDetails() {

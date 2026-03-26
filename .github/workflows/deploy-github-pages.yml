@@ -37,6 +37,9 @@ jobs:
 
       - name: Install and build
         working-directory: dashboard
+        env:
+          # next.config.ts uses this + GITHUB_REPOSITORY to set basePath for static assets
+          GITHUB_PAGES: "1"
         run: |
           npm ci
           npm run build
