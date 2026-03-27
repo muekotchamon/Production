@@ -2620,8 +2620,8 @@
 
 /* Larger calendar: more horizontal space from crew rail + taller day cells */
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-people {
-  flex: 0 0 6rem;
-  padding: 0.65rem 0.45rem 0.65rem 0.5rem;
+  flex: 0 0 18rem;
+  padding: 0.65rem 0.7rem 0.65rem 0.75rem;
 }
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal {
@@ -2656,6 +2656,18 @@
   padding: 2px 4px;
 }
 
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-person-name {
+  font-size: 0.82rem;
+}
+
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-person-role {
+  font-size: 0.62rem;
+}
+
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-person-row {
+  font-size: 0.74rem;
+}
+
 .rj-pf-flow-cal {
   --rj-pf-flow-cal-border: #e8e8ec;
   --rj-pf-flow-cal-surface: #fafafa;
@@ -2673,8 +2685,12 @@
 }
 
 .rj-pf-flow-cal-people {
-  flex: 0 0 7.25rem;
-  padding: 0.65rem 0.5rem 0.65rem 0.6rem;
+  flex: 0 0 20rem;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.65rem 0.7rem 0.65rem 0.8rem;
   background: linear-gradient(180deg, #fbfbfc 0%, #f4f4f7 100%);
   border-right: 1px solid var(--rj-pf-flow-cal-border);
 }
@@ -2752,7 +2768,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.12s ease;
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   color: #4b5563;
 }
 
@@ -2800,7 +2816,7 @@
 }
 
 .rj-pf-flow-cal-person-name {
-  font-size: 0.6rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: #374151;
   line-height: 1.2;
@@ -2811,7 +2827,7 @@
 }
 
 .rj-pf-flow-cal-person-role {
-  font-size: 0.5rem;
+  font-size: 0.56rem;
   font-weight: 500;
   color: #9ca3af;
   line-height: 1.15;
@@ -2834,6 +2850,65 @@
   margin: 0;
   padding: 0.1rem 0 0;
   line-height: 1.35;
+}
+
+.rj-pf-flow-cal-assign-note {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  flex-shrink: 0;
+  border-top: 1px solid var(--rj-pf-flow-cal-border);
+}
+
+.rj-pf-flow-cal-assign-note-label {
+  display: block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin: 0 0 0.2rem;
+}
+
+.rj-pf-flow-cal-assign-note-source {
+  margin: 0 0 0.35rem;
+  font-size: 0.52rem;
+  line-height: 1.3;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.rj-pf-flow-cal-assign-note-body {
+  width: 100%;
+  min-height: 3.5rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  padding: 0.5rem 0.55rem;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  background: #fff;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+  -webkit-overflow-scrolling: touch;
+}
+
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-assign-note-label {
+  font-size: 0.58rem;
+}
+
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-assign-note-source {
+  font-size: 0.54rem;
+}
+
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-assign-note-body {
+  font-size: 0.68rem;
+  min-height: 3.75rem;
+  max-height: 12rem;
 }
 
 .rj-pf-flow-cal-main {
@@ -3543,6 +3618,12 @@
 
   .rj-pf-flow-cal-people-list li {
     margin-top: 0 !important;
+  }
+
+  .rj-pf-flow-cal-assign-note {
+    flex-basis: 100%;
+    width: 100%;
+    margin-top: 0.7rem;
   }
 }
 

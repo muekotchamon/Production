@@ -37,6 +37,10 @@ const PROJECT_SCHEDULE_ID = "__project-schedule__";
 /** Calendar chips/bars from flow checks + dated fields (ids must use this prefix). */
 const FLOW_MILESTONE_ID_PREFIX = "flow-ms-";
 
+/** Shown in Assign rail when `productionDetail` is empty (until wired to real data). */
+const MOCK_NOTE_TO_PRODUCTION =
+  "Gate code 4721. Customer prefers morning start. Dumpster on east driveway — keep clear for concrete truck Tue.";
+
 const JOB_FLAG_TYPES = [
   "Funding",
   "Permitting",
@@ -511,7 +515,7 @@ export default function ProductionFlowCalendar({
       <div className="rj-pf-flow-cal-shell">
         <aside
           className="rj-pf-flow-cal-people rj-pf-flow-cal-people--readonly"
-          aria-label="Assigned crew from the Assign step (view only)"
+          aria-label="Assign: crew from the Assign step and note to production (read-only)"
         >
           <p className="rj-pf-flow-cal-people-heading">Assign</p>
           <p className="rj-pf-flow-cal-assign-sync-hint">
@@ -542,6 +546,19 @@ export default function ProductionFlowCalendar({
               ))}
             </ul>
           )}
+          <div className="rj-pf-flow-cal-assign-note">
+            <span className="rj-pf-flow-cal-assign-note-label">Note to production</span>
+            <p className="rj-pf-flow-cal-assign-note-source">From production detail</p>
+            <div
+              className="rj-pf-flow-cal-assign-note-body"
+              role="region"
+              aria-label="Note to production"
+            >
+              {details.productionDetail.trim()
+                ? details.productionDetail.trim()
+                : MOCK_NOTE_TO_PRODUCTION}
+            </div>
+          </div>
         </aside>
 
         <div className="rj-pf-flow-cal-main">
