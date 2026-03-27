@@ -11,9 +11,20 @@ export type ScheduleCalendarEntry = {
   endDate: string;
 };
 
+/** Status steps on the calendar Flag popover (newest last); dates editable there. */
+export type JobFlagStatusEvent = {
+  status: string;
+  /** ISO `YYYY-MM-DD` or any string shown verbatim if unparsable. */
+  dateStored: string;
+};
+
 export type ProjectDetails = {
   customerName: string;
   customerAddress: string;
+  /** Shown on Flag popover job summary. */
+  jobNumber: string;
+  customerPhone: string;
+  workType: string;
   soldDate: string;
   productionDetail: string;
   internalNotes: string;
@@ -43,11 +54,21 @@ export type ProjectDetails = {
   scheduleStart: string;
   scheduleEnd: string;
   scheduleCalendarEntries: ScheduleCalendarEntry[];
+  /** Calendar Flag popover — type, people, note, audit. */
+  jobFlagType: string;
+  jobFlagComment: string;
+  jobFlagAssigneeIds: string[];
+  jobFlagCreatedByEmail: string;
+  jobFlagCreatedAtDisplay: string;
+  jobFlagStatusHistory: JobFlagStatusEvent[];
 };
 
 const initialDetails: ProjectDetails = {
   customerName: "Valerie Chen",
   customerAddress: "4521 Maple Ave, Chicago, IL 60640",
+  jobNumber: "2218460",
+  customerPhone: "",
+  workType: "Roof repair",
   soldDate: "Feb 10, 2025",
   productionDetail:
     "3/13- 1st Call: LVM letting Valerie know we will call when temp gets warmer",
@@ -77,6 +98,17 @@ const initialDetails: ProjectDetails = {
   scheduleStart: "",
   scheduleEnd: "",
   scheduleCalendarEntries: [],
+  jobFlagType: "Funding",
+  jobFlagComment: "Mason called customer today 11/1",
+  jobFlagAssigneeIds: [],
+  jobFlagCreatedByEmail: "kim.w@klauslarsen.com",
+  jobFlagCreatedAtDisplay: "Oct 4, 2021, 1:58 PM",
+  jobFlagStatusHistory: [
+    { status: "Open", dateStored: "2026-04-01" },
+    { status: "In progress", dateStored: "2026-04-01" },
+    { status: "Updated", dateStored: "2026-04-01" },
+    { status: "Closed", dateStored: "2026-04-01" },
+  ],
 };
 
 export function useProjectDetails() {
