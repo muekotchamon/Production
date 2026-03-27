@@ -2467,10 +2467,12 @@
   .rj-pf-d2-split.rj-pf-d2-canvas-wrap.rj-pf-d2-canvas--modern.rj-pf-d2-split--flow-calendar {
     display: grid;
     grid-template-columns: minmax(17rem, 24rem) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     column-gap: 1.25rem;
     justify-content: stretch;
     width: 100%;
     max-width: 100%;
+    min-height: 0;
   }
 }
 
@@ -2624,6 +2626,27 @@
   padding: 0.65rem 0.7rem 0.65rem 0.75rem;
 }
 
+@media (min-width: 992px) {
+  .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-people {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    min-height: 0;
+    align-content: start;
+  }
+
+  .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-assign-note {
+    margin-top: 0;
+    align-self: center;
+    justify-self: stretch;
+    width: 100%;
+    max-height: 100%;
+    min-height: 0;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--rj-pf-flow-cal-border);
+  }
+}
+
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal {
   font-size: 0.74rem;
 }
@@ -2634,17 +2657,17 @@
 }
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-dow-cell {
-  padding: 0.4rem 0.12rem;
+  padding: 0.35rem 0.1rem;
   font-size: 0.58rem;
 }
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-day {
-  min-height: 9rem;
-  padding: 0.28rem 0.3rem 0.32rem;
+  min-height: 8.75rem;
+  padding: 0.26rem 0.3rem 0.32rem;
 }
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-day--pad {
-  min-height: 6.5rem;
+  min-height: 6.4rem;
 }
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-day-num {
@@ -2666,6 +2689,16 @@
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-person-row {
   font-size: 0.74rem;
+}
+
+/* Align calendar header row with flow column + Assign rail (avoid toolbar vertical-center gap) */
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-main {
+  padding-top: 0.32rem;
+}
+
+.rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-toolbar {
+  align-items: flex-start;
+  margin-bottom: 0.36rem;
 }
 
 .rj-pf-flow-cal {
@@ -2907,8 +2940,8 @@
 
 .rj-pf-d2-split--flow-calendar .rj-pf-flow-cal-assign-note-body {
   font-size: 0.68rem;
-  min-height: 3.75rem;
-  max-height: 12rem;
+  min-height: 3.6rem;
+  max-height: 11.5rem;
 }
 
 .rj-pf-flow-cal-main {
@@ -3655,6 +3688,10 @@
     top: 0.75rem;
     align-self: start;
   }
+
+  .rj-pf-d2-split--flow-calendar .rj-pf-d2-d1-calendar-rail {
+    top: 0;
+  }
 }
 
 .rj-pf-d2-d2-right-rail {
@@ -4051,6 +4088,32 @@ button.rj-pf-d2-node-marker:focus-visible {
   .rj-pf-d2-canvas-scroll {
   max-height: none;
   overflow: visible;
+}
+
+/* Flow + calendar: left column scrolls inside the flex viewport (overrides rule above) */
+.rj-pf-d2-split.rj-pf-d2-canvas-wrap.rj-pf-d2-canvas--modern.rj-pf-d2-split--flow-calendar
+  > .rj-pf-d2-canvas-scroll {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 992px) {
+  .rj-pf-d2-split.rj-pf-d2-canvas-wrap.rj-pf-d2-canvas--modern.rj-pf-d2-split--flow-calendar
+    > .rj-pf-d2-canvas-scroll {
+    height: 100%;
+    max-height: none;
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .rj-pf-d2-split.rj-pf-d2-canvas-wrap.rj-pf-d2-canvas--modern.rj-pf-d2-split--flow-calendar
+    > .rj-pf-d2-canvas-scroll {
+    max-height: min(55vh, 32rem);
+  }
 }
 
 .rj-pf-d2-split.rj-pf-d2-canvas-wrap.rj-pf-d2-canvas--modern

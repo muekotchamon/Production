@@ -44,7 +44,10 @@ export default function CrmShell() {
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-column rj-dashboard" style={{ paddingLeft: 0, paddingRight: 0 }}>
+    <div
+      className="d-flex flex-column flex-grow-1 rj-dashboard"
+      style={{ paddingLeft: 0, paddingRight: 0, minHeight: 0 }}
+    >
       <header className="app-top">
         <div className="app-top-inner">
           <div>

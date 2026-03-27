@@ -125,6 +125,90 @@
   padding: 0.75rem 0 1.5rem;
 }
 
+/* Single-page shell: no document/body scroll; header + main fill viewport */
+html.h-100 {
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+body.min-vh-100.app-body-bg {
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+body.min-vh-100.app-body-bg > .rj-dashboard {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.rj-dashboard .app-top {
+  flex-shrink: 0;
+}
+
+.rj-dashboard .app-main.flex-grow-1 {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0.65rem;
+}
+
+.rj-dashboard .app-main .app-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Design 1: scroll inside workflow area, not the page */
+.rj-dashboard .app-main .rj-crm-design1-grid {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  align-items: stretch;
+}
+
+@media (min-width: 992px) {
+  .rj-dashboard .app-main .rj-crm-design1-grid {
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+.rj-dashboard .app-main .rj-crm-design1-grid__main,
+.rj-dashboard .app-main .rj-crm-design1-grid__side {
+  min-height: 0;
+}
+
+/* Design 2: fill main; internal panes handle scroll (see roofing-job.css) */
+.rj-dashboard .app-wrap > .rj-pf-d2 {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.rj-dashboard .rj-pf-d2-flow-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rj-dashboard .rj-pf-d2-flow-layout > .rj-pf-d2-split {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
 /* Panels */
 .app-section-title {
   font-size: 0.7rem;
