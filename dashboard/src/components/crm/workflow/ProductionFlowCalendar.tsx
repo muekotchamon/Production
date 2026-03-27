@@ -10,7 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import type { ProjectDetails, ScheduleCalendarEntry } from "@/hooks/useProjectDetails";
-import { PRODUCTION_CREW, crewTone } from "@/lib/production-crew";
+import {
+  PRODUCTION_CREW,
+  crewTone,
+  type ProductionCrewMember,
+} from "@/lib/production-crew";
 import {
   compareLocalDay,
   formatStoredFromIsoPicker,
@@ -23,6 +27,19 @@ const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 const PROJECT_SCHEDULE_ID = "__project-schedule__";
 
+/** Calendar chips/bars from flow checks + dated fields (ids must use this prefix). */
+const FLOW_MILESTONE_ID_PREFIX = "flow-ms-";
+
+export type FlowCalendarMilestone = {
+  id: string;
+  title: string;
+  dateStored: string;
+};
+
+function isFlowMilestoneId(id: string): boolean {
+  return id.startsWith(FLOW_MILESTONE_ID_PREFIX);
+}
+
 type VisualEvent = {
   id: string;
   title: string;
@@ -32,16 +49,6 @@ type VisualEvent = {
   tone: string;
   start: Date;
   end: Date;
-};
-
-type WeekSegment = {
-  eventId: string;
-  title: string;
-  subtitle?: string;
-  tone: string;
-  startCol: number;
-  endCol: number;
-  lane: number;
 };
 
 function buildMonthWeeks(year: number, month: number): (number | null)[][] {
@@ -56,62 +63,6 @@ function buildMonthWeeks(year: number, month: number): (number | null)[][] {
     weeks.push(cells.slice(i, i + 7));
   }
   return weeks;
-}
-
-function clipEventToMonth(
-  start: Date,
-  end: Date,
-  year: number,
-  month: number,
-): { start: Date; end: Date } | null {
-  const ms = startOfLocalDay(new Date(year, month, 1));
-  const me = startOfLocalDay(new Date(year, month + 1, 0));
-  const s = startOfLocalDay(start);
-  const e = startOfLocalDay(end);
-  const cs = s > ms ? s : ms;
-  const ce = e < me ? e : me;
-  if (compareLocalDay(cs, ce) > 0) return null;
-  return { start: cs, end: ce };
-}
-
-function segmentsForWeek(
-  week: (number | null)[],
-  year: number,
-  month: number,
-  clipStart: Date,
-  clipEnd: Date,
-): { startCol: number; endCol: number } | null {
-  const cols: number[] = [];
-  for (let c = 0; c < 7; c++) {
-    const day = week[c];
-    if (day === null) continue;
-    const dt = startOfLocalDay(new Date(year, month, day));
-    if (compareLocalDay(dt, clipStart) >= 0 && compareLocalDay(dt, clipEnd) <= 0) {
-      cols.push(c);
-    }
-  }
-  if (!cols.length) return null;
-  return { startCol: Math.min(...cols), endCol: Math.max(...cols) };
-}
-
-function assignLanes(
-  raw: { eventId: string; startCol: number; endCol: number }[],
-): Map<string, number> {
-  const sorted = [...raw].sort(
-    (a, b) => a.startCol - b.startCol || a.endCol - b.endCol,
-  );
-  const laneEnds: number[] = [];
-  const map = new Map<string, number>();
-  for (const seg of sorted) {
-    let lane = 0;
-    while (lane < laneEnds.length && laneEnds[lane]! >= seg.startCol) {
-      lane++;
-    }
-    if (lane === laneEnds.length) laneEnds.push(seg.endCol);
-    else laneEnds[lane] = seg.endCol;
-    map.set(seg.eventId, lane);
-  }
-  return map;
 }
 
 function toVisualEvents(
@@ -165,15 +116,62 @@ function toVisualEvents(
   return out;
 }
 
+/**
+ * Project schedule chip only on the start and/or end calendar day — plain labels.
+ * If start and end are the same day, only "Start date" is shown.
+ */
+function projectScheduleChipLabel(
+  ev: VisualEvent,
+  day: number,
+  year: number,
+  month: number,
+): string | null {
+  const dt = startOfLocalDay(new Date(year, month, day));
+  const rangeStart = startOfLocalDay(ev.start);
+  const rangeEnd = startOfLocalDay(ev.end);
+  const isStart = compareLocalDay(dt, rangeStart) === 0;
+  const isEnd = compareLocalDay(dt, rangeEnd) === 0;
+  if (isStart) return "Start date";
+  if (isEnd) return "End date";
+  return null;
+}
+
+function appendFlowMilestoneEvents(
+  base: VisualEvent[],
+  milestones: FlowCalendarMilestone[],
+  assignPersonIds: string[],
+): VisualEvent[] {
+  const toneId = assignPersonIds[0] ?? "";
+  const tone = toneId ? crewTone(toneId) : "slate";
+  const out = [...base];
+  for (const ms of milestones) {
+    if (!isFlowMilestoneId(ms.id)) continue;
+    const s = parseStoredDate(ms.dateStored);
+    if (!s) continue;
+    const day = startOfLocalDay(s);
+    out.push({
+      id: ms.id,
+      title: ms.title,
+      subtitle: undefined,
+      assigneeId: toneId || "__flow-milestone__",
+      tone,
+      start: day,
+      end: day,
+    });
+  }
+  return out;
+}
+
 type Props = {
   details: ProjectDetails;
   updateDetail: <K extends keyof ProjectDetails>(
     key: K,
     value: ProjectDetails[K],
   ) => void;
-  /** Same array as the Assign step — calendar sidebar edits this list in real time. */
+  /** Same list as the Assign flow step — shown read-only in the calendar rail. */
   assignPersonIds: string[];
-  onAssignPersonIdsChange: (next: string[]) => void;
+  /** Point-in-time rows from the flow / project details (Assign check, permit dates, …). */
+  flowMilestones?: FlowCalendarMilestone[];
   /** After saving dates from the modal, mark the Schedule flow step complete. */
   onScheduleDatesSaved?: () => void;
 };
@@ -182,7 +180,7 @@ export default function ProductionFlowCalendar({
   details,
   updateDetail,
   assignPersonIds,
-  onAssignPersonIdsChange,
+  flowMilestones = [],
   onScheduleDatesSaved,
 }: Props): ReactNode {
   const today = new Date();
@@ -204,78 +202,53 @@ export default function ProductionFlowCalendar({
   });
   const weeks = useMemo(() => buildMonthWeeks(year, month), [year, month]);
 
-  const visualEvents = useMemo(
-    () =>
-      toVisualEvents(
-        details.scheduleCalendarEntries,
-        details.scheduleStart,
-        details.scheduleEnd,
-        details.customerName,
-        details.customerAddress,
-      ),
-    [
+  const visualEvents = useMemo(() => {
+    const base = toVisualEvents(
       details.scheduleCalendarEntries,
       details.scheduleStart,
       details.scheduleEnd,
       details.customerName,
       details.customerAddress,
-    ],
-  );
+    );
+    return appendFlowMilestoneEvents(base, flowMilestones, assignPersonIds);
+  }, [
+    details.scheduleCalendarEntries,
+    details.scheduleStart,
+    details.scheduleEnd,
+    details.customerName,
+    details.customerAddress,
+    flowMilestones,
+    assignPersonIds,
+  ]);
 
-  const allCrewAssigned = useMemo(
-    () =>
-      PRODUCTION_CREW.length > 0 &&
-      PRODUCTION_CREW.every((c) => assignPersonIds.includes(c.id)),
-    [assignPersonIds],
-  );
+  const assignedCrewDisplay = useMemo(() => {
+    const byId = new Map(PRODUCTION_CREW.map((c) => [c.id, c]));
+    return assignPersonIds
+      .map((id) => byId.get(id))
+      .filter((c): c is ProductionCrewMember => c !== undefined);
+  }, [assignPersonIds]);
 
   const filteredEvents = useMemo(() => {
     return visualEvents.filter((ev) => {
       if (ev.id === PROJECT_SCHEDULE_ID) return true;
+      if (isFlowMilestoneId(ev.id)) return true;
       if (assignPersonIds.length === 0) return true;
       return assignPersonIds.includes(ev.assigneeId);
     });
   }, [visualEvents, assignPersonIds]);
 
-  const weekSegments = useMemo(() => {
-    return weeks.map((week, wi) => {
-      const segs: Omit<WeekSegment, "lane">[] = [];
-      for (const ev of filteredEvents) {
-        const clipped = clipEventToMonth(ev.start, ev.end, year, month);
-        if (!clipped) continue;
-        const seg = segmentsForWeek(week, year, month, clipped.start, clipped.end);
-        if (!seg) continue;
-        segs.push({
-          eventId: ev.id,
-          title: ev.title,
-          subtitle: ev.subtitle,
-          tone: ev.tone,
-          startCol: seg.startCol,
-          endCol: seg.endCol,
-        });
-      }
-      const lanes = assignLanes(
-        segs.map((s) => ({
-          eventId: s.eventId,
-          startCol: s.startCol,
-          endCol: s.endCol,
-        })),
-      );
-      const full: WeekSegment[] = segs.map((s) => ({
-        ...s,
-        lane: lanes.get(s.eventId) ?? 0,
-      }));
-      const maxLane = full.reduce((m, s) => Math.max(m, s.lane), -1);
-      return { weekIndex: wi, week, segments: full, maxLane };
-    });
-  }, [weeks, filteredEvents, year, month]);
-
-  const eventsStartingOnDay = useCallback(
+  /** Events whose local date range includes this calendar day (start through end inclusive). */
+  const eventsOverlappingDay = useCallback(
     (day: number) => {
       const dt = startOfLocalDay(new Date(year, month, day));
-      return filteredEvents.filter(
-        (ev) => compareLocalDay(startOfLocalDay(ev.start), dt) === 0,
-      );
+      return filteredEvents.filter((ev) => {
+        const rangeStart = startOfLocalDay(ev.start);
+        const rangeEnd = startOfLocalDay(ev.end);
+        return (
+          compareLocalDay(dt, rangeStart) >= 0 &&
+          compareLocalDay(dt, rangeEnd) <= 0
+        );
+      });
     },
     [filteredEvents, year, month],
   );
@@ -336,19 +309,6 @@ export default function ProductionFlowCalendar({
     setModalOpen(false);
   };
 
-  const toggleAssignPerson = (id: string) => {
-    const has = assignPersonIds.includes(id);
-    if (has) {
-      onAssignPersonIdsChange(assignPersonIds.filter((x) => x !== id));
-    } else {
-      onAssignPersonIdsChange([...assignPersonIds, id]);
-    }
-  };
-
-  const selectEveryoneOnCrew = () => {
-    onAssignPersonIdsChange(PRODUCTION_CREW.map((c) => c.id));
-  };
-
   const navigateMonth = (dir: -1 | 1) => {
     setCursor((c) => new Date(c.getFullYear(), c.getMonth() + dir, 1));
     setSelectedDay(null);
@@ -364,33 +324,23 @@ export default function ProductionFlowCalendar({
     <div className="rj-pf-flow-cal">
       <div className="rj-pf-flow-cal-shell">
         <aside
-          className="rj-pf-flow-cal-people"
-          aria-label="Assign — linked to Assign step"
+          className="rj-pf-flow-cal-people rj-pf-flow-cal-people--readonly"
+          aria-label="Assigned crew from the Assign step (view only)"
         >
           <p className="rj-pf-flow-cal-people-heading">Assign</p>
           <p className="rj-pf-flow-cal-assign-sync-hint">
-            Same list as the <strong>Assign</strong> step in the flow.
+            Who is on the job — set in the <strong>Assign</strong> step (not
+            editable here).
           </p>
-          <button
-            type="button"
-            className={`rj-pf-flow-cal-chip-all${allCrewAssigned ? " is-on" : ""}`}
-            onClick={selectEveryoneOnCrew}
-          >
-            <span className="rj-pf-flow-cal-check rj-pf-flow-cal-check--all" />
-            Everyone
-          </button>
-          <ul className="rj-pf-flow-cal-people-list list-unstyled mb-0">
-            {PRODUCTION_CREW.map((c) => {
-              const on = assignPersonIds.includes(c.id);
-              return (
+          {assignedCrewDisplay.length === 0 ? (
+            <p className="rj-pf-flow-cal-assign-empty text-muted small mb-0">
+              No one selected yet.
+            </p>
+          ) : (
+            <ul className="rj-pf-flow-cal-people-list list-unstyled mb-0">
+              {assignedCrewDisplay.map((c) => (
                 <li key={c.id}>
-                  <label className="rj-pf-flow-cal-person-row">
-                    <input
-                      type="checkbox"
-                      className="rj-pf-flow-cal-person-input"
-                      checked={on}
-                      onChange={() => toggleAssignPerson(c.id)}
-                    />
+                  <div className="rj-pf-flow-cal-person-row rj-pf-flow-cal-person-row--readonly">
                     <span
                       className={`rj-pf-flow-cal-swatch rj-pf-flow-cal-swatch--${c.tone}`}
                       aria-hidden
@@ -401,11 +351,11 @@ export default function ProductionFlowCalendar({
                         {c.assignSuffix}
                       </span>
                     </span>
-                  </label>
+                  </div>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
         </aside>
 
         <div className="rj-pf-flow-cal-main">
@@ -448,9 +398,7 @@ export default function ProductionFlowCalendar({
               ))}
             </div>
 
-            {weekSegments.map(({ week, segments, maxLane, weekIndex }) => {
-              const nLanes = Math.max(maxLane + 1, 1);
-              return (
+            {weeks.map((week, weekIndex) => (
                 <div key={weekIndex} className="rj-pf-flow-cal-week">
                   <div className="rj-pf-flow-cal-week-days">
                     {week.map((day, col) => {
@@ -489,18 +437,55 @@ export default function ProductionFlowCalendar({
                               <span className="rj-pf-flow-cal-day-num">{day}</span>
                               <div className="rj-pf-flow-cal-day-chips">
                                 {(() => {
-                                  const evs = eventsStartingOnDay(day);
+                                  const evs = eventsOverlappingDay(day);
                                   const max = 2;
-                                  const shown = evs.slice(0, max);
-                                  const more = evs.length - max;
+                                  type ChipRow = {
+                                    key: string;
+                                    tone: string;
+                                    text: string;
+                                    tip?: string;
+                                  };
+                                  const rows: ChipRow[] = [];
+                                  for (const ev of evs) {
+                                    if (ev.id === PROJECT_SCHEDULE_ID) {
+                                      const text = projectScheduleChipLabel(
+                                        ev,
+                                        day,
+                                        year,
+                                        month,
+                                      );
+                                      if (text === null) continue;
+                                      const tip = [
+                                        ev.title,
+                                        ev.subtitle,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" · ");
+                                      rows.push({
+                                        key: `${ev.id}-${day}`,
+                                        tone: ev.tone,
+                                        text,
+                                        tip: tip || undefined,
+                                      });
+                                    } else {
+                                      rows.push({
+                                        key: `${ev.id}-${day}`,
+                                        tone: ev.tone,
+                                        text: ev.title,
+                                      });
+                                    }
+                                  }
+                                  const shown = rows.slice(0, max);
+                                  const more = rows.length - max;
                                   return (
                                     <>
-                                      {shown.map((ev) => (
+                                      {shown.map((row) => (
                                         <span
-                                          key={ev.id + day}
-                                          className={`rj-pf-flow-cal-mini-chip rj-pf-flow-cal-mini-chip--${ev.tone}`}
+                                          key={row.key}
+                                          className={`rj-pf-flow-cal-mini-chip rj-pf-flow-cal-mini-chip--${row.tone}`}
+                                          title={row.tip}
                                         >
-                                          {ev.title}
+                                          {row.text}
                                         </span>
                                       ))}
                                       {more > 0 ? (
@@ -518,63 +503,18 @@ export default function ProductionFlowCalendar({
                       );
                     })}
                   </div>
-                  <div
-                    className="rj-pf-flow-cal-week-lanes"
-                    style={{
-                      gridTemplateRows: `repeat(${nLanes}, minmax(26px, auto))`,
-                    }}
-                  >
-                    {segments.map((seg) => {
-                      const isProject = seg.eventId === PROJECT_SCHEDULE_ID;
-                      const tip = isProject
-                        ? seg.subtitle
-                          ? `${seg.title} · ${seg.subtitle} · Project schedule`
-                          : seg.title === "Project schedule"
-                            ? "Project schedule"
-                            : `${seg.title} · Project schedule`
-                        : seg.title;
-                      return (
-                        <div
-                          key={`${seg.eventId}-w${weekIndex}`}
-                          className={`rj-pf-flow-cal-bar rj-pf-flow-cal-bar--${seg.tone}${
-                            isProject && seg.subtitle
-                              ? " rj-pf-flow-cal-bar--project"
-                              : ""
-                          }`}
-                          style={{
-                            gridColumn: `${seg.startCol + 1} / ${seg.endCol + 2}`,
-                            gridRow: seg.lane + 1,
-                          }}
-                          title={tip}
-                        >
-                          {isProject && seg.subtitle ? (
-                            <>
-                              <span className="rj-pf-flow-cal-bar-project-name">
-                                {seg.title}
-                              </span>
-                              <span className="rj-pf-flow-cal-bar-project-addr">
-                                {seg.subtitle}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="rj-pf-flow-cal-bar-text">
-                              {seg.title}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
-              );
-            })}
+            ))}
           </div>
 
           <p className="rj-pf-flow-cal-hint text-muted small mb-0">
-            <strong>Add schedule</strong> edits the same start/end dates as the
-            Schedule step. Double-click a day to open with that day when dates
-            are empty. Assign list filters crew bars; project schedule always
-            shows.
+            <strong>Add schedule</strong> sets start/end on the{" "}
+            <strong>Schedule</strong> step; the project row shows chips{" "}
+            <strong>Start date</strong> and <strong>End date</strong> only on
+            those days (middle days have no project chip). Multi-day crew blocks
+            still show each day in range. Double-click a day to open when dates
+            are empty. Calendar crew chips follow Assign; flow milestones always
+            show.
           </p>
         </div>
       </div>

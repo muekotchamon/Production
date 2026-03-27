@@ -11,7 +11,10 @@ import {
 } from "react";
 import type { ProjectDetails } from "@/hooks/useProjectDetails";
 import { ASSIGN_CREW_DROPDOWN, crewAssignLabel } from "@/lib/production-crew";
-import ProductionFlowCalendar from "./ProductionFlowCalendar";
+import ProductionFlowCalendar, {
+  type FlowCalendarMilestone,
+} from "./ProductionFlowCalendar";
+import ProductionFlowDesign2Layout from "./ProductionFlowDesign2Layout";
 
 type MainNodeId =
   | "sold"
@@ -236,7 +239,7 @@ type Props = {
   ) => void;
 };
 
-/** Shown on First call when the step is marked complete (circle check). */
+/** Shown when a manual check step logs completion (first call, assign, closed, …). */
 function formatFirstCallCheckDate(d = new Date()): string {
   return d.toLocaleDateString("en-US", {
     month: "short",
@@ -359,6 +362,13 @@ function effectiveProductionEnd(fl: FlowLocalProdScheduleSlice): string {
   return fl.scheduleEnd.trim() ? fl.scheduleEnd : fl.productionEnd;
 }
 
+/** Production dates stay hidden / unlinked until Schedule has both start and end. */
+function scheduleFlowDatesReady(fl: FlowLocalProdScheduleSlice): boolean {
+  return (
+    fl.scheduleStart.trim().length > 0 && fl.scheduleEnd.trim().length > 0
+  );
+}
+
 function primaryDateForAutoStep(
   id: MainNodeId,
   details: ProjectDetails,
@@ -370,8 +380,10 @@ function primaryDateForAutoStep(
     case "contracted":
       return flowLocal.contractedDate;
     case "prod-start":
+      if (!scheduleFlowDatesReady(flowLocal)) return "";
       return effectiveProductionStart(flowLocal);
     case "prod-end":
+      if (!scheduleFlowDatesReady(flowLocal)) return "";
       return effectiveProductionEnd(flowLocal);
     default:
       return "";
@@ -460,6 +472,7 @@ export default function ProductionFlowDesign2({
   const [flowLocal, setFlowLocal] = useState({
     contractedDate: "Feb 24, 2025",
     assignPersonIds: [] as string[],
+    assignCheckedAt: "",
     firstCallCheckedAt: "",
     productionStart: "Apr 08, 2025",
     productionEnd: "Apr 14, 2025",
@@ -512,6 +525,10 @@ export default function ProductionFlowDesign2({
         }
       }
       if (id === "assign") {
+        setFlowLocal((fl) => ({
+          ...fl,
+          assignCheckedAt: nextDone ? formatFirstCallCheckDate() : "",
+        }));
         if (nextDone) {
           setAssignFieldsExpanded(true);
           setSelectedId("assign");
@@ -536,6 +553,53 @@ export default function ProductionFlowDesign2({
     setScheduleFieldsExpanded(true);
     setSelectedId("schedule");
   }, []);
+
+  const flowCalendarMilestones = useMemo((): FlowCalendarMilestone[] => {
+    const m: FlowCalendarMilestone[] = [];
+    const add = (id: string, title: string, date: string) => {
+      const t = date.trim();
+      if (!t) return;
+      m.push({ id, title, dateStored: t });
+    };
+    if (mainDone.assign) {
+      add("flow-ms-assign", "Assign", flowLocal.assignCheckedAt);
+    }
+    if (mainDone["first-call"]) {
+      add("flow-ms-first-call", "First call", flowLocal.firstCallCheckedAt);
+    }
+    if (mainDone.closed) {
+      add("flow-ms-closed", "Closed", flowLocal.closedCheckedAt);
+    }
+    if (details.permitApplied && details.permitAppliedDate.trim()) {
+      add("flow-ms-permit-applied", "Permit applied", details.permitAppliedDate);
+    }
+    if (details.permitObtain && details.permitObtainDate.trim()) {
+      add("flow-ms-permit-obtained", "Permit obtained", details.permitObtainDate);
+    }
+    if (details.permitExpiration && details.permitExpirationDate.trim()) {
+      add(
+        "flow-ms-permit-expiration",
+        "Permit expiration",
+        details.permitExpirationDate,
+      );
+    }
+    if (details.permitFinalized && details.permitFinalizedDate.trim()) {
+      add("flow-ms-permit-finalized", "Permit finalized", details.permitFinalizedDate);
+    }
+    if (details.orderPlaced.trim()) {
+      add("flow-ms-material-ordered", "Material ordered", details.orderPlaced);
+    }
+    if (details.expectedDelivery.trim()) {
+      add("flow-ms-material-delivery", "Material delivery", details.expectedDelivery);
+    }
+    if (details.dumpsterOrdered.trim()) {
+      add("flow-ms-waste-ordered", "Waste ordered", details.dumpsterOrdered);
+    }
+    if (flowLocal.wasteDelivery.trim()) {
+      add("flow-ms-waste-delivery", "Waste delivery", flowLocal.wasteDelivery);
+    }
+    return m;
+  }, [mainDone, flowLocal, details]);
 
   const renderConnector = (isLast: boolean, lineClass: string) => {
     if (isLast) return null;
@@ -847,8 +911,8 @@ export default function ProductionFlowDesign2({
               : "Mark first call done and log today’s date"
             : id === "assign"
               ? mainDone[id]
-                ? "Mark Assign as not complete"
-                : "Mark Assign as complete; form opens automatically. Use chevron to hide or show later."
+                ? "Mark Assign as not complete; clear recorded date"
+                : "Mark Assign as complete; record assignment date. Form opens automatically. Use chevron to hide or show later."
               : id === "completion"
                 ? mainDone[id]
                   ? "Mark Completion as not complete"
@@ -937,17 +1001,30 @@ export default function ProductionFlowDesign2({
               assignPersonSummary(flowLocal.assignPersonIds),
             )}
           </div>
+          {mainDone.assign ? (
+            <div className="rj-pf-d2-node-flow-inline-date-row">
+              {dateLine(flowLocal.assignCheckedAt)}
+            </div>
+          ) : null}
         </div>
       ) : id === "prod-start" ? (
         <div className="rj-pf-d2-node-flow-inline">
           <div className="rj-pf-d2-node-flow-inline-date-row">
-            {dateLine(effectiveProductionStart(flowWithSchedule))}
+            {dateLine(
+              scheduleFlowDatesReady(flowWithSchedule)
+                ? effectiveProductionStart(flowWithSchedule)
+                : "",
+            )}
           </div>
         </div>
       ) : id === "prod-end" ? (
         <div className="rj-pf-d2-node-flow-inline">
           <div className="rj-pf-d2-node-flow-inline-date-row">
-            {dateLine(effectiveProductionEnd(flowWithSchedule))}
+            {dateLine(
+              scheduleFlowDatesReady(flowWithSchedule)
+                ? effectiveProductionEnd(flowWithSchedule)
+                : "",
+            )}
           </div>
         </div>
       ) : id === "closed" ? (
@@ -1230,33 +1307,26 @@ export default function ProductionFlowDesign2({
       );
     }
     if (sid === "prod-start") {
-      const scheduleLinked = details.scheduleStart.trim().length > 0;
+      if (!scheduleFlowDatesReady(flowWithSchedule)) {
+        return (
+          <p className="rj-pf-d2-prod-date-hint text-muted small mb-0">
+            Set both start and end in the <strong>Schedule</strong> step first.
+            Then production start will show here and stay in sync with schedule
+            start.
+          </p>
+        );
+      }
       return (
         <>
           <p className="rj-pf-d2-prod-date-hint text-muted small mb-0">
-            {scheduleLinked ? (
-              <>
-                Showing <strong>Schedule</strong> start — change it here or in
-                Schedule; both stay in sync.
-              </>
-            ) : (
-              <>
-                No schedule start yet — set the on-site kickoff here, or add
-                dates under <strong>Schedule</strong> to link automatically.
-              </>
-            )}
+            Showing <strong>Schedule</strong> start — change it here or in
+            Schedule; both stay in sync.
           </p>
           {field(
             "Production start date",
             <FlowDateInput
               value={effectiveProductionStart(flowWithSchedule)}
-              onChange={(v) => {
-                if (details.scheduleStart.trim()) {
-                  updateDetail("scheduleStart", v);
-                } else {
-                  setLocal("productionStart", v);
-                }
-              }}
+              onChange={(v) => updateDetail("scheduleStart", v)}
               ariaLabel="Production start date"
             />,
           )}
@@ -1264,33 +1334,26 @@ export default function ProductionFlowDesign2({
       );
     }
     if (sid === "prod-end") {
-      const scheduleLinked = details.scheduleEnd.trim().length > 0;
+      if (!scheduleFlowDatesReady(flowWithSchedule)) {
+        return (
+          <p className="rj-pf-d2-prod-date-hint text-muted small mb-0">
+            Set both start and end in the <strong>Schedule</strong> step first.
+            Then production end will show here and stay in sync with schedule
+            end.
+          </p>
+        );
+      }
       return (
         <>
           <p className="rj-pf-d2-prod-date-hint text-muted small mb-0">
-            {scheduleLinked ? (
-              <>
-                Showing <strong>Schedule</strong> end — change it here or in
-                Schedule; both stay in sync.
-              </>
-            ) : (
-              <>
-                No schedule end yet — set the wrap-up date here, or add dates
-                under <strong>Schedule</strong> to link automatically.
-              </>
-            )}
+            Showing <strong>Schedule</strong> end — change it here or in
+            Schedule; both stay in sync.
           </p>
           {field(
             "Production end date",
             <FlowDateInput
               value={effectiveProductionEnd(flowWithSchedule)}
-              onChange={(v) => {
-                if (details.scheduleEnd.trim()) {
-                  updateDetail("scheduleEnd", v);
-                } else {
-                  setLocal("productionEnd", v);
-                }
-              }}
+              onChange={(v) => updateDetail("scheduleEnd", v)}
               ariaLabel="Production end date"
             />,
           )}
@@ -1332,350 +1395,20 @@ export default function ProductionFlowDesign2({
     return null;
   };
 
-  const permitRailDisabled = !details.permitRequired;
-
   return (
     <div className="rj-pf-d2">
-      <div className="rj-pf-d2-main-with-permit">
-        <div className="rj-pf-d2-split rj-pf-d2-canvas-wrap rj-pf-d2-canvas--modern rj-pf-d2-split--flow-calendar">
-          <div className="rj-pf-d2-canvas-scroll">
-            <div className="rj-pf-d2-canvas-inner">
-              {MAIN_ORDER.map((id, i) => renderMainNode(id, i))}
-            </div>
-          </div>
-          <aside
-            className="rj-pf-d2-d1-calendar-rail"
-            aria-label="Production schedule, waste hauling, and production window"
-          >
-            <div className="rj-pf-d2-flow-cal-wrap">
-              <ProductionFlowCalendar
-                details={details}
-                updateDetail={updateDetail}
-                assignPersonIds={flowLocal.assignPersonIds}
-                onAssignPersonIdsChange={(next) =>
-                  setLocal("assignPersonIds", next)
-                }
-                onScheduleDatesSaved={markScheduleCompleteFromCalendar}
-              />
-            </div>
-            <div className="rj-pf-d2-calendar-below-stack">
-              <section
-                className="rj-pf-d2-waste-rail"
-                aria-label="Waste hauling"
-              >
-                    <div
-                      className="rj-pf-d2-permit-rail-card"
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <header className="rj-pf-d2-permit-rail-head">
-                        <h2 className="rj-pf-d2-permit-rail-title">
-                          Waste hauling
-                        </h2>
-                        <p className="rj-pf-d2-permit-rail-sub">
-                          Dumpster setup, order dates, and drop logistics.
-                        </p>
-                      </header>
-                      <div className="rj-pf-d2-toggle-row rj-pf-d2-toggle-row--no-line">
-                        <span>Dumpster needed</span>
-                        <div className="form-check form-switch mb-0">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            role="switch"
-                            checked={details.dumpsterEnabled}
-                            onChange={(e) =>
-                              updateDetail("dumpsterEnabled", e.target.checked)
-                            }
-                            aria-label="Dumpster needed"
-                          />
-                        </div>
-                      </div>
-                      <div className="rj-pf-d2-permit-rail-dates rj-pf-d2-permit-rail-dates--stack">
-                        <div className="rj-pf-d2-field rj-pf-d2-field--inline">
-                          <label className="rj-pf-d2-field-label">Ordered</label>
-                          <FlowDateInput
-                            value={details.dumpsterOrdered}
-                            onChange={(v) => updateDetail("dumpsterOrdered", v)}
-                            ariaLabel="Waste ordered date"
-                          />
-                        </div>
-                        <div className="rj-pf-d2-field rj-pf-d2-field--inline">
-                          <label className="rj-pf-d2-field-label">
-                            Delivery
-                          </label>
-                          <FlowDateInput
-                            value={flowLocal.wasteDelivery}
-                            onChange={(v) => setLocal("wasteDelivery", v)}
-                            ariaLabel="Waste delivery date"
-                          />
-                        </div>
-                      </div>
-                    </div>
-              </section>
-
-              <section
-                className="rj-pf-d2-production-rail"
-                aria-label="Production start and end"
-              >
-                    <div
-                      className="rj-pf-d2-permit-rail-card"
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <header className="rj-pf-d2-permit-rail-head">
-                        <h2 className="rj-pf-d2-permit-rail-title">
-                          Production window
-                        </h2>
-                        <p className="rj-pf-d2-permit-rail-sub">
-                          Start and end dates; syncs with Schedule when set.
-                        </p>
-                      </header>
-                      <p className="rj-pf-d2-prod-date-hint text-muted small mb-0">
-                        Uses <strong>Schedule</strong> dates when set; editing
-                        here keeps them in sync.
-                      </p>
-                      <div className="rj-pf-d2-permit-rail-dates rj-pf-d2-permit-rail-dates--stack">
-                        <div className="rj-pf-d2-field rj-pf-d2-field--inline">
-                          <label className="rj-pf-d2-field-label">
-                            Production start
-                          </label>
-                          <FlowDateInput
-                            value={effectiveProductionStart(flowWithSchedule)}
-                            onChange={(v) => {
-                              if (details.scheduleStart.trim()) {
-                                updateDetail("scheduleStart", v);
-                              } else {
-                                setLocal("productionStart", v);
-                              }
-                            }}
-                            ariaLabel="Production start date"
-                          />
-                        </div>
-                        <div className="rj-pf-d2-field rj-pf-d2-field--inline">
-                          <label className="rj-pf-d2-field-label">
-                            Production end
-                          </label>
-                          <FlowDateInput
-                            value={effectiveProductionEnd(flowWithSchedule)}
-                            onChange={(v) => {
-                              if (details.scheduleEnd.trim()) {
-                                updateDetail("scheduleEnd", v);
-                              } else {
-                                setLocal("productionEnd", v);
-                              }
-                            }}
-                            ariaLabel="Production end date"
-                          />
-                        </div>
-                      </div>
-                    </div>
-              </section>
-            </div>
-          </aside>
-          <aside
-            className="rj-pf-d2-d2-right-rail"
-            aria-label="Permit, material, completion, and closed"
-          >
-            <section className="rj-pf-d2-permit-rail" aria-label="Permit">
-              <div
-                className="rj-pf-d2-permit-rail-card"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <header className="rj-pf-d2-permit-rail-head">
-                  <h2 className="rj-pf-d2-permit-rail-title">Permit</h2>
-                  <p className="rj-pf-d2-permit-rail-sub">
-                    Jurisdiction and compliance dates for this job.
-                  </p>
-                </header>
-                <div className="rj-pf-d2-permit-rail-toggles">
-                  <div className="rj-pf-d2-toggle-row rj-pf-d2-toggle-row--no-line">
-                    <span>Permit required</span>
-                    <div className="form-check form-switch mb-0">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        role="switch"
-                        checked={details.permitRequired}
-                        onChange={(e) =>
-                          updateDetail("permitRequired", e.target.checked)
-                        }
-                        aria-label="Permit required for this job"
-                      />
-                    </div>
-                  </div>
-                  <div className="rj-pf-d2-toggle-row rj-pf-d2-toggle-row--no-line">
-                    <span>IPI required</span>
-                    <div className="form-check form-switch mb-0">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        role="switch"
-                        checked={details.permitIpiRequired}
-                        disabled={permitRailDisabled}
-                        onChange={(e) =>
-                          updateDetail("permitIpiRequired", e.target.checked)
-                        }
-                        aria-label="IPI required"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="rj-pf-d2-permit-rail-dates">
-                  {PERMIT_CHILDREN.map((c) => (
-                    <div
-                      key={c.key}
-                      className="rj-pf-d2-field rj-pf-d2-field--inline"
-                    >
-                      <label className="rj-pf-d2-field-label">{c.label}</label>
-                      <FlowDateInput
-                        value={String(details[c.dateKey] ?? "")}
-                        disabled={permitRailDisabled}
-                        onChange={(v) => {
-                          updateDetail(c.dateKey, v);
-                          updateDetail(c.flag, v.trim().length > 0);
-                        }}
-                        ariaLabel={`${c.label} date`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="rj-pf-d2-material-rail" aria-label="Material">
-              <div
-                className="rj-pf-d2-permit-rail-card"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <header className="rj-pf-d2-permit-rail-head">
-                  <h2 className="rj-pf-d2-permit-rail-title">Material</h2>
-                  <p className="rj-pf-d2-permit-rail-sub">
-                    Order and expected delivery dates for this job.
-                  </p>
-                </header>
-                <div className="rj-pf-d2-permit-rail-dates">
-                  <div className="rj-pf-d2-field rj-pf-d2-field--inline">
-                    <label className="rj-pf-d2-field-label">Ordered</label>
-                    <FlowDateInput
-                      value={details.orderPlaced}
-                      onChange={(v) => updateDetail("orderPlaced", v)}
-                      ariaLabel="Material ordered date"
-                    />
-                  </div>
-                  <div className="rj-pf-d2-field rj-pf-d2-field--inline">
-                    <label className="rj-pf-d2-field-label">Delivery</label>
-                    <FlowDateInput
-                      value={details.expectedDelivery}
-                      onChange={(v) => updateDetail("expectedDelivery", v)}
-                      ariaLabel="Expected material delivery date"
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="rj-pf-d2-completion-rail" aria-label="Completion">
-              <div
-                className="rj-pf-d2-permit-rail-card"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <header className="rj-pf-d2-permit-rail-head">
-                  <h2 className="rj-pf-d2-permit-rail-title">Completion</h2>
-                  <p className="rj-pf-d2-permit-rail-sub">
-                    Walkthrough checklist before closing the job.
-                  </p>
-                </header>
-                <div className="rj-pf-d2-completion-checklist rj-pf-d2-completion-checklist--rail">
-                  <span className="rj-pf-d2-field-label rj-pf-d2-completion-checklist-heading">
-                    Checklist
-                  </span>
-                  <div className="rj-pf-d2-toggle-row">
-                    <span>Final Payment</span>
-                    <div className="form-check mb-0">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={flowLocal.completionFinalPayment}
-                        onChange={(e) =>
-                          setLocal(
-                            "completionFinalPayment",
-                            e.target.checked,
-                          )
-                        }
-                        aria-label="Final Payment"
-                      />
-                    </div>
-                  </div>
-                  <div className="rj-pf-d2-toggle-row">
-                    <span>Signed</span>
-                    <div className="form-check mb-0">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={flowLocal.completionSigned}
-                        onChange={(e) =>
-                          setLocal("completionSigned", e.target.checked)
-                        }
-                        aria-label="Signed"
-                      />
-                    </div>
-                  </div>
-                  <div className="rj-pf-d2-toggle-row">
-                    <span>Photo uploaded</span>
-                    <div className="form-check mb-0">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={flowLocal.completionPhotoUploaded}
-                        onChange={(e) =>
-                          setLocal(
-                            "completionPhotoUploaded",
-                            e.target.checked,
-                          )
-                        }
-                        aria-label="Photo uploaded"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="rj-pf-d2-closed-rail" aria-label="Closed">
-              <div
-                className="rj-pf-d2-permit-rail-card"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <header className="rj-pf-d2-permit-rail-head">
-                  <h2 className="rj-pf-d2-permit-rail-title">Closed</h2>
-                  <p className="rj-pf-d2-permit-rail-sub">
-                    Archive date recorded in CRM.
-                  </p>
-                </header>
-                <div className="rj-pf-d2-field rj-pf-d2-field--inline mb-0">
-                  <label className="rj-pf-d2-field-label">Close date</label>
-                  <FlowDateInput
-                    value={flowLocal.closedCheckedAt}
-                    onChange={(v) => {
-                      setLocal("closedCheckedAt", v);
-                      setMainDone((p) => ({
-                        ...p,
-                        closed: v.trim().length > 0,
-                      }));
-                    }}
-                    ariaLabel="Closed date"
-                  />
-                </div>
-              </div>
-            </section>
-          </aside>
-        </div>
-      </div>
+      <ProductionFlowDesign2Layout
+        canvas={MAIN_ORDER.map((id, i) => renderMainNode(id, i))}
+        calendar={
+          <ProductionFlowCalendar
+            details={details}
+            updateDetail={updateDetail}
+            assignPersonIds={flowLocal.assignPersonIds}
+            flowMilestones={flowCalendarMilestones}
+            onScheduleDatesSaved={markScheduleCompleteFromCalendar}
+          />
+        }
+      />
     </div>
   );
 }

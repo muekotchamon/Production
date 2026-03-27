@@ -77,14 +77,14 @@ export default function CrmShell() {
       <main className="app-main flex-grow-1">
         <div className="app-wrap py-2">
           {shellDesign === "design1" ? (
-            <div className="row g-3 align-items-start">
-              <div className="col-12 col-lg-5">
+            <div className="rj-crm-design1-grid">
+              <div className="rj-crm-design1-grid__main">
                 <WorkflowProjectDashboard
                   {...shared}
                   productionDetail={details.productionDetail}
                 />
               </div>
-              <div className="col-12 col-lg-7">
+              <div className="rj-crm-design1-grid__side">
                 <ProjectDashboardSidebar
                   completedCount={completedCount}
                   totalSteps={totalSteps}
